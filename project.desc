@@ -1,0 +1,7 @@
+group: de.zalando.pymodules
+name: eventlog
+version: 0.1
+title: Eventlog
+description: Python eventlog module.
+organization: Zalando/Technology/Platform
+type: zompy
