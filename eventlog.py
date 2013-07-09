@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-__all__ = ['register', 'log']
+__all__ = ['log', 'register', 'register_all', 'Event']
+
+from collections import namedtuple
 
 import logging
 import logging.handlers
@@ -14,6 +16,8 @@ event_log_layout = None
 event_types = {}
 field_pattern = re.compile('^[a-z][a-zA-Z0-9]*$')
 name_pattern = re.compile(r'^[A-Z0-9]+(:?_?[A-Z0-9])*$')
+
+Event = namedtuple('Event', ['id', 'fields'])
 
 
 class EscapeFormatter(string.Formatter):
@@ -36,13 +40,14 @@ class EventlogError(Exception):
         return repr(self.msg)
 
 
-def _init(log_handler=None, layout_handler=None):
+def _init(log_handler=None, layout_handler=None, path=None):
     ''' Initializes eventlog and layout. Called only once after initial call to register or log. Optional handlers are
     used only by unit tests to swap file for stream handlers. '''
 
     global event_log, event_log_layout
 
-    path = (os.environ['APP_HOME'] + '/logs/' if 'APP_HOME' in os.environ else './')
+    # Take the path passed as a parameter or use APP_HOME if present, otherwise fallback to current directory.
+    path = path or ((os.environ['APP_HOME'] + '/logs/' if 'APP_HOME' in os.environ else './'))
 
     event_log = logging.getLogger('eventlog')
     event_log.setLevel(logging.INFO)
@@ -91,6 +96,22 @@ def register(e_id, name, *args):
 
     event_log_layout.info('{0:x}\t{1!s}'.format(e_id, name) + ''.join('\t{}' for i in range(len(args))).format(*args))
     event_types[e_id] = args
+
+
+def register_all(events, path=None):
+    ''' Registers a dict of events. The dict must contain event names as keys and Event objects as values. All event
+    names must be written in upper case. The optional path parameter tells eventlog where to write log files. Example:
+        register_all({
+            'PAYMENT_RECEIVED': Event(0x62001, ['userName', 'amout']),
+            'PAYMENT_CANCELLED': Event(0x62002, ['userName', 'reason'])
+        })
+    '''
+
+    if event_log is None or event_log_layout is None:
+        _init(path=path)
+
+    for name, event in events.iteritems():
+        register(event.id, name, *event.fields)
 
 
 def log(e_id, **kwargs):

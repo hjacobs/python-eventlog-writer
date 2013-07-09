@@ -1,14 +1,27 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 import cStringIO
+import eventlog
+import os
 import unittest
-from eventlog import EventlogError, _init, log, register
+from eventlog import EventlogError, _init, log, register, register_all, Event
 from logging import StreamHandler
 from re import split
 
 
 class TestEventlog(unittest.TestCase):
+
+    def __init__(self, method_name='runTest'):
+        # Workaround for codevalidator.
+        self.tearDown = self.tear_down
+        super(TestEventlog, self).__init__(method_name)
+
+    def tear_down(self):
+        eventlog.event_types.clear()
+        for f in os.listdir('.'):
+            if f.endswith('.log') or f.endswith('.layout'):
+                os.remove(f)
 
     def test_register_invalid_id(self):
         with self.assertRaises(EventlogError):
@@ -116,6 +129,26 @@ class TestEventlog(unittest.TestCase):
 
         self.assertEquals(4, len(eventlog), 'Should have only four entries')
         self.assertEquals('null', eventlog[3], 'Should convert None to null')
+
+    def test_register_all(self):
+        log_stream = cStringIO.StringIO()
+        layout_stream = cStringIO.StringIO()
+        log_handler = StreamHandler(log_stream)
+        layout_handler = StreamHandler(layout_stream)
+        _init(log_handler, layout_handler)
+
+        register_all({'TEST_PASSED': Event(12349, ['userName', 'amout']), 'TEST_SUCCEEDED': Event(12350, ['userName',
+                     'reason'])})
+        log(12349, **{'userName': 'test', 'amount': 1})
+        log(12350, **{'userName': 'test', 'reason': 'works'})
+
+        layout = split('\s+', layout_stream.getvalue().strip())
+        eventlog = split('\s+', log_stream.getvalue().strip())
+
+        self.assertEquals(12, len(layout), 'Should contain nine items in layout')
+        self.assertEquals(9, len(eventlog), 'Should contain nine items in log')
+        self.assertEquals('TEST_PASSED', layout[9], 'Should contain the first registered event name')
+        self.assertEquals('TEST_SUCCEEDED', layout[3], 'Should contain the second registered event name')
 
 
 if __name__ == '__main__':
