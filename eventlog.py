@@ -51,12 +51,14 @@ def _init(log_handler=None, layout_handler=None, path=None):
 
     event_log = logging.getLogger('eventlog')
     event_log.setLevel(logging.INFO)
-    event_log_file_handler = logging.handlers.TimedRotatingFileHandler(path + 'eventlog.log', when='midnight')
+    event_log_file_handler = logging.handlers.TimedRotatingFileHandler(os.path.join(path, 'eventlog.log'),
+            when='midnight')
     event_log_file_handler.setLevel(logging.INFO)
 
     event_log_layout = logging.getLogger('eventlog-layout')
     event_log_layout.setLevel(logging.INFO)
-    event_layout_file_handler = logging.handlers.TimedRotatingFileHandler(path + 'eventlog.layout', when='midnight')
+    event_layout_file_handler = logging.handlers.TimedRotatingFileHandler(os.path.join(path, 'eventlog.layout'),
+            when='midnight')
     event_layout_file_handler.setLevel(logging.INFO)
 
     formatter = logging.Formatter('%(asctime)s %(message)s')
