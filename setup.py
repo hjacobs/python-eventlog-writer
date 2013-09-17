@@ -3,4 +3,4 @@
 
 from setuptools import setup
 
-setup(name='zalando-eventlog', version='0.1', py_modules=['eventlog'])
+setup(name='zalando-eventlog', version='0.2', py_modules=['eventlog'])

@@ -50,12 +50,15 @@ def _init(log_handler=None, layout_handler=None, path=None):
     path = path or ((os.environ['APP_HOME'] + '/logs/' if 'APP_HOME' in os.environ else './'))
 
     event_log = logging.getLogger('eventlog')
+    # prevent logging event log stuff to STDOUT (root logger):
+    event_log.propagate = False
     event_log.setLevel(logging.INFO)
     event_log_file_handler = logging.handlers.TimedRotatingFileHandler(os.path.join(path, 'eventlog.log'),
             when='midnight')
     event_log_file_handler.setLevel(logging.INFO)
 
     event_log_layout = logging.getLogger('eventlog-layout')
+    event_log_layout.propagate = False
     event_log_layout.setLevel(logging.INFO)
     event_layout_file_handler = logging.handlers.TimedRotatingFileHandler(os.path.join(path, 'eventlog.layout'),
             when='midnight')
@@ -137,4 +140,15 @@ def log(e_id, **kwargs):
     else:
         raise EventlogError('Event with id {0!s} is not registered. Did you forget to call register?'.format(e_id))
 
+
+if __name__ == '__main__':
+    # test run
+    EVENTS = {'TEST_EVENT1': Event(0xffff1, ['test', 'anotherAttribute']), 'TEST_EVENT2': Event(0x77ff2, ['test',
+              'oneMoreField'])}
+    logging.basicConfig(level=logging.INFO)
+    logging.info('Testing event logging..')
+    register_all(EVENTS)
+    log(EVENTS['TEST_EVENT1'].id, test='test', anotherAttribute='avalue')
+    log(EVENTS['TEST_EVENT2'].id, test='test', oneMoreField='fvalue')
+    logging.info('..done (see eventlog.log)')
 
