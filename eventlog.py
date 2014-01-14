@@ -23,6 +23,7 @@ Event = namedtuple('Event', ['id', 'fields'])
 class EscapeFormatter(string.Formatter):
 
     def convert_field(self, value, conversion):
+        value = (value.encode(encoding='utf-8') if isinstance(value, unicode) else value)
         if conversion == 'e':
             return ('null' if value is None else str(value).replace('\t', '\\t').replace('\n', '\\n'))
         return super(EscapeFormatter, self).convert_field(value, conversion)
