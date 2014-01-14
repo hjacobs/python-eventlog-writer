@@ -150,6 +150,26 @@ class TestEventlog(unittest.TestCase):
         self.assertEquals('TEST_PASSED', layout[9], 'Should contain the first registered event name')
         self.assertEquals('TEST_SUCCEEDED', layout[3], 'Should contain the second registered event name')
 
+    def test_unicode_characters(self):
+        e_id = 12351
+        log_stream = cStringIO.StringIO()
+        layout_stream = cStringIO.StringIO()
+        log_handler = StreamHandler(log_stream)
+        layout_handler = StreamHandler(layout_stream)
+        _init(log_handler, layout_handler)
+
+        unicode_msg = u'Auswirkungen für den Kunden'
+
+        register(e_id, 'EVENT_NAME', 'msg')
+        log(e_id, msg=unicode_msg)
+
+        eventlog = split('\s+', log_stream.getvalue().strip())
+        # should print: eventlog: ['2014-01-14', '15:16:05,301', '303f', 'Auswirkungen', 'f\xc3\xbcr', 'den', 'Kunden']
+        print 'eventlog: {0}'.format(eventlog)
+
+        self.assertEquals(7, len(eventlog), 'Should have only 7 entries')
+        self.assertEquals(u'für'.encode(encoding='utf-8'), eventlog[4], 'Should handle unicode characters')
+
 
 if __name__ == '__main__':
     unittest.main()
