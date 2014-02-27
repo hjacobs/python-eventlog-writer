@@ -18,6 +18,7 @@ if args.test:
     argv = ['nosetests']
     argv.append('--with-coverage')
     argv.append('--cover-xml')
+    argv.append('--with-doctest')
     argv.append('--cover-xml-file=' + os.getcwd() + '/coverage.xml')
     argv.append('--with-xunit')
     argv.append('--xunit-file=' + os.getcwd() + '/nosetests.xml')
