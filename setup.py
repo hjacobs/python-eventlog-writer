@@ -24,4 +24,4 @@ if args.test:
     argv.append('--xunit-file=' + os.getcwd() + '/nosetests.xml')
     nose.run(argv=argv)
 else:
-    setup(name='zalando-eventlog', version='0.3', py_modules=['eventlog'])
+    setup(name='zalando-eventlog', version='0.4', py_modules=['eventlog'], install_requires=['simpleflock'])
