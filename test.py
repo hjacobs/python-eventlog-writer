@@ -164,8 +164,6 @@ class TestEventlog(unittest.TestCase):
         log(e_id, msg=unicode_msg)
 
         eventlog = split('\s+', log_stream.getvalue().strip())
-        # should print: eventlog: ['2014-01-14', '15:16:05,301', '303f', 'Auswirkungen', 'f\xc3\xbcr', 'den', 'Kunden']
-        print 'eventlog: {0}'.format(eventlog)
 
         self.assertEquals(7, len(eventlog), 'Should have only 7 entries')
         self.assertEquals(u'für'.encode(encoding='utf-8'), eventlog[4], 'Should handle unicode characters')
