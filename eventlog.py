@@ -53,7 +53,7 @@ def _init(log_handler=None, layout_handler=None, path=None, lock=None):
     path = path or ((os.environ['APP_HOME'] + '/logs/' if 'APP_HOME' in os.environ else './'))
     # Take the lock path passed as a parameter or take the instance key from APP_HOME and create a path to the lock in
     # tmp directory. If APP_HOME is not defined, use current directory.
-    event_log_lock = lock or ((os.path.join('tmp', '{}_eventlog.lock'.format(os.environ['APP_HOME'].rsplit('/',
+    event_log_lock = lock or ((os.path.join('/tmp', '{}_eventlog.lock'.format(os.environ['APP_HOME'].rsplit('/',
                               1)[-1])) if 'APP_HOME' in os.environ else './eventlog.lock'))
 
     event_log = logging.getLogger('eventlog')
