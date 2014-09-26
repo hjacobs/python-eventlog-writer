@@ -4,7 +4,7 @@
 __all__ = ['log', 'register', 'register_all', 'Event']
 
 from collections import namedtuple
-from simpleflock import SimpleFlock as flock
+from cloghandler import ConcurrentRotatingFileHandler
 
 import logging
 import logging.handlers
@@ -60,15 +60,15 @@ def _init(log_handler=None, layout_handler=None, path=None, lock=None):
     # prevent logging event log stuff to STDOUT (root logger):
     event_log.propagate = False
     event_log.setLevel(logging.INFO)
-    event_log_file_handler = logging.handlers.TimedRotatingFileHandler(os.path.join(path, 'eventlog.log'),
-            when='midnight')
+    event_log_file_handler = ConcurrentRotatingFileHandler(os.path.join(path, 'eventlog.log'), maxBytes=524288,
+                                                           backupCount=9)
     event_log_file_handler.setLevel(logging.INFO)
 
     event_log_layout = logging.getLogger('eventlog-layout')
     event_log_layout.propagate = False
     event_log_layout.setLevel(logging.INFO)
-    event_layout_file_handler = logging.handlers.TimedRotatingFileHandler(os.path.join(path, 'eventlog.layout'),
-            when='midnight')
+    event_layout_file_handler = ConcurrentRotatingFileHandler(os.path.join(path, 'eventlog.layout'), maxBytes=524288,
+            backupCount=9)
     event_layout_file_handler.setLevel(logging.INFO)
 
     formatter = logging.Formatter('%(asctime)s %(message)s')
@@ -106,9 +106,7 @@ def register(e_id, name, *args):
     if not all(map(field_pattern.match, args)):
         raise EventlogError('Event field names must be camel case with first letter lower case')
 
-    with flock(event_log_lock):
-        event_log_layout.info('{0:x}\t{1!s}'.format(e_id, name) + ''.join('\t{}' for i in
-                              range(len(args))).format(*args))
+    event_log_layout.info('{0:x}\t{1!s}'.format(e_id, name) + ''.join('\t{}' for i in range(len(args))).format(*args))
     event_types[e_id] = args
 
 
@@ -144,9 +142,8 @@ def log(e_id, **kwargs):
     flow_id = ' '
     if e_id in event_types:
         # filter out event types that were registered, but are not in keyword args, then escape tabs and newlines
-        with flock(event_log_lock):
-            event_log.info('{1} {0:x}'.format(e_id, flow_id) + formatter.format(''.join('\t{' + k + '!e}' for k in
-                           filter(lambda e: e in kwargs, event_types[e_id])), **kwargs))
+        event_log.info('{1} {0:x}'.format(e_id, flow_id) + formatter.format(''.join('\t{' + k + '!e}' for k in
+                       filter(lambda e: e in kwargs, event_types[e_id])), **kwargs))
     else:
         raise EventlogError('Event with id {0!s} is not registered. Did you forget to call register?'.format(e_id))
 
