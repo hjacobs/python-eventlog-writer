@@ -14,7 +14,7 @@ import string
 
 event_log = None
 event_log_layout = None
-event_log_lock = None
+# event_log_lock = None
 event_types = {}
 field_pattern = re.compile('^[a-z][a-zA-Z0-9]*$')
 name_pattern = re.compile(r'^[A-Z0-9]+(:?_?[A-Z0-9])*$')
@@ -47,15 +47,14 @@ def _init(log_handler=None, layout_handler=None, path=None, lock=None):
     ''' Initializes eventlog and layout. Called only once after initial call to register or log. Optional handlers are
     used only by unit tests to swap file for stream handlers. '''
 
-    global event_log, event_log_layout, event_log_lock
+    global event_log, event_log_layout
 
     # Take the path passed as a parameter or use APP_HOME if present, otherwise fallback to current directory.
     path = path or ((os.environ['APP_HOME'] + '/logs/' if 'APP_HOME' in os.environ else './'))
     # Take the lock path passed as a parameter or take the instance key from APP_HOME and create a path to the lock in
     # tmp directory. If APP_HOME is not defined, use current directory.
-    event_log_lock = lock or ((os.path.join('/tmp', '{}_eventlog.lock'.format(os.environ['APP_HOME'].rsplit('/',
-                              1)[-1])) if 'APP_HOME' in os.environ else './eventlog.lock'))
-
+    # event_log_lock = lock or ((os.path.join('/tmp', '{}_eventlog.lock'.format(os.environ['APP_HOME'].rsplit('/',
+    #                           1)[-1])) if 'APP_HOME' in os.environ else './eventlog.lock'))
     event_log = logging.getLogger('eventlog')
     # prevent logging event log stuff to STDOUT (root logger):
     event_log.propagate = False
@@ -135,7 +134,7 @@ def log(e_id, **kwargs):
         log(0x62001, **events)
     '''
 
-    if event_log is None or event_log_layout is None or event_log_lock is None:
+    if event_log is None or event_log_layout is None:
         _init()
 
     # flow id placeholder
