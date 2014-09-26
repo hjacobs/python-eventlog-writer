@@ -4,7 +4,7 @@
 __all__ = ['log', 'register', 'register_all', 'Event']
 
 from collections import namedtuple
-from simpleflock import SimpleFlock as flock
+from cloghandler import ConcurrentRotatingFileHandler
 
 import logging
 import logging.handlers
@@ -14,7 +14,7 @@ import string
 
 event_log = None
 event_log_layout = None
-event_log_lock = None
+# event_log_lock = None
 event_types = {}
 field_pattern = re.compile('^[a-z][a-zA-Z0-9]*$')
 name_pattern = re.compile(r'^[A-Z0-9]+(:?_?[A-Z0-9])*$')
@@ -47,28 +47,27 @@ def _init(log_handler=None, layout_handler=None, path=None, lock=None):
     ''' Initializes eventlog and layout. Called only once after initial call to register or log. Optional handlers are
     used only by unit tests to swap file for stream handlers. '''
 
-    global event_log, event_log_layout, event_log_lock
+    global event_log, event_log_layout
 
     # Take the path passed as a parameter or use APP_HOME if present, otherwise fallback to current directory.
     path = path or ((os.environ['APP_HOME'] + '/logs/' if 'APP_HOME' in os.environ else './'))
     # Take the lock path passed as a parameter or take the instance key from APP_HOME and create a path to the lock in
     # tmp directory. If APP_HOME is not defined, use current directory.
-    event_log_lock = lock or ((os.path.join('/tmp', '{}_eventlog.lock'.format(os.environ['APP_HOME'].rsplit('/',
-                              1)[-1])) if 'APP_HOME' in os.environ else './eventlog.lock'))
-
+    # event_log_lock = lock or ((os.path.join('/tmp', '{}_eventlog.lock'.format(os.environ['APP_HOME'].rsplit('/',
+    #                           1)[-1])) if 'APP_HOME' in os.environ else './eventlog.lock'))
     event_log = logging.getLogger('eventlog')
     # prevent logging event log stuff to STDOUT (root logger):
     event_log.propagate = False
     event_log.setLevel(logging.INFO)
-    event_log_file_handler = logging.handlers.TimedRotatingFileHandler(os.path.join(path, 'eventlog.log'),
-            when='midnight')
+    event_log_file_handler = ConcurrentRotatingFileHandler(os.path.join(path, 'eventlog.log'), maxBytes=524288,
+                                                           backupCount=9)
     event_log_file_handler.setLevel(logging.INFO)
 
     event_log_layout = logging.getLogger('eventlog-layout')
     event_log_layout.propagate = False
     event_log_layout.setLevel(logging.INFO)
-    event_layout_file_handler = logging.handlers.TimedRotatingFileHandler(os.path.join(path, 'eventlog.layout'),
-            when='midnight')
+    event_layout_file_handler = ConcurrentRotatingFileHandler(os.path.join(path, 'eventlog.layout'), maxBytes=524288,
+            backupCount=9)
     event_layout_file_handler.setLevel(logging.INFO)
 
     formatter = logging.Formatter('%(asctime)s %(message)s')
@@ -106,9 +105,7 @@ def register(e_id, name, *args):
     if not all(map(field_pattern.match, args)):
         raise EventlogError('Event field names must be camel case with first letter lower case')
 
-    with flock(event_log_lock):
-        event_log_layout.info('{0:x}\t{1!s}'.format(e_id, name) + ''.join('\t{}' for i in
-                              range(len(args))).format(*args))
+    event_log_layout.info('{0:x}\t{1!s}'.format(e_id, name) + ''.join('\t{}' for i in range(len(args))).format(*args))
     event_types[e_id] = args
 
 
@@ -137,16 +134,15 @@ def log(e_id, **kwargs):
         log(0x62001, **events)
     '''
 
-    if event_log is None or event_log_layout is None or event_log_lock is None:
+    if event_log is None or event_log_layout is None:
         _init()
 
     # flow id placeholder
     flow_id = ' '
     if e_id in event_types:
         # filter out event types that were registered, but are not in keyword args, then escape tabs and newlines
-        with flock(event_log_lock):
-            event_log.info('{1} {0:x}'.format(e_id, flow_id) + formatter.format(''.join('\t{' + k + '!e}' for k in
-                           filter(lambda e: e in kwargs, event_types[e_id])), **kwargs))
+        event_log.info('{1} {0:x}'.format(e_id, flow_id) + formatter.format(''.join('\t{' + k + '!e}' for k in
+                       filter(lambda e: e in kwargs, event_types[e_id])), **kwargs))
     else:
         raise EventlogError('Event with id {0!s} is not registered. Did you forget to call register?'.format(e_id))
 
