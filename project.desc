@@ -1,6 +1,6 @@
 group: de.zalando.pymodules
 name: eventlog
-version: 0.4.1
+version: 0.4.5
 title: Eventlog
 description: Python eventlog module.
 organization: Zalando/Technology/Platform/Software
