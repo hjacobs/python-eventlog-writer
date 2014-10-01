@@ -3,4 +3,5 @@
 
 from setuptools import setup
 
-setup(name='zalando-eventlog', version='0.4.3', py_modules=['eventlog'], install_requires=['simpleflock'])
+setup(name='zalando-eventlog', version='0.4.5', py_modules=['eventlog', 'tcloghandler'],
+      install_requires=['ConcurrentLogHandler'])
