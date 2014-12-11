@@ -8,6 +8,8 @@ See: https://pypi.python.org/pypi/ConcurrentLogHandler/0.9.1
 
 """
 
+from __future__ import print_function
+
 import os
 import sys
 import re
@@ -466,8 +468,8 @@ class ConcurrentTimeRotatingFileHandler(BaseRotatingHandler):
                 file_object_stat = os.fstat(self.stream.fileno())
                 file_on_disk_stat = os.stat(self.baseFilename)
                 replaced = not os.path.samestat(file_object_stat, file_on_disk_stat)
-            except Exception, e:
-                print 'something went very wrong: {}'.format(e)
+            except Exception as e:
+                print('something went very wrong: {}'.format(e))
 
             if replaced:
                 self._update_rollover_time()

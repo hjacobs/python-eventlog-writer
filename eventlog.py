@@ -133,7 +133,7 @@ def register_all(events, path=None):
     if event_log is None or event_log_layout is None:
         _init(path=path)
 
-    for name, event in events.iteritems():
+    for name, event in events.items():
         register(event.id, name, *event.fields)
 
 
