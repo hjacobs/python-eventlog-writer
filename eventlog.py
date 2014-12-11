@@ -13,12 +13,12 @@ import os
 import re
 import string
 
-### Default behaviour of the module: if need to change these, do it immediately after module import
+# START Default behaviour of the module: if need to change these, do it immediately after module import
 filesize_rotation = False
 rotation_maxBytes = 5242880
 rotation_backupCount = 9
 rotation_when = 'midnight'
-###
+# END
 
 event_log = None
 event_log_layout = None
